@@ -90,7 +90,11 @@ if __name__ == "__main__":
             print("\n--- Resultados Finales ---")
             print("Solución Óptima Encontrada:")
             for var_name, value in final_solution.items():
-                print(f"  {var_name} = {value:.4f}")
+                # Verifica si el valor no es None antes de intentar formatearlo
+                if value is not None:
+                    print(f"  {var_name} = {value:.4f}")
+                else:
+                    print(f"  {var_name} = N/A (sin valor asignado por el solver)")
             print(f"Valor Óptimo de la Función Objetivo: {final_obj_value:.4f}")
         else:
             print("\nEl problema no pudo ser resuelto a una solución entera óptima.")
