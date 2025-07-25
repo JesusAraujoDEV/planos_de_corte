@@ -1,27 +1,109 @@
 # Solucionador de Programación Lineal Entera (PLE) con Planos de Corte
 
-## Descripción
+## Descripción General
 
-Este proyecto implementa un solucionador interactivo para problemas de Programación Lineal Entera (PLE) utilizando el **método de Planos de Corte (Cutting Plane Method)**. El programa permite al usuario ingresar los datos de un modelo de programación lineal (función objetivo, restricciones, y tipo de variables) y luego aplica iterativamente el algoritmo de planos de corte para encontrar la solución óptima entera.
+Este proyecto implementa un solucionador interactivo para problemas de **Programación Lineal Entera (PLE)** utilizando el **método de Planos de Corte (Cutting Plane Method)**. El usuario puede definir su propio modelo de optimización (función objetivo, variables, restricciones) y el sistema encuentra la solución óptima entera aplicando iterativamente cortes sobre la relajación lineal.
 
-La implementación sigue un diseño Orientado a Objetos (POO) para modularizar las diferentes partes del problema (modelo, variables, restricciones, y el propio algoritmo de solución), facilitando su comprensión, mantenimiento y posible extensión.
+El código está organizado en tres archivos principales, cada uno con una responsabilidad clara dentro del flujo de resolución:
 
-## Características
+---
 
-* **Entrada Interactiva de Modelos**: El usuario puede definir su propio problema de PLE (maximización o minimización, variables continuas/enteras/binarias, restricciones lineales).
-* **Método de Planos de Corte**: Aplica el algoritmo de planos de corte para encontrar soluciones enteras.
-* **Flexibilidad**: Permite definir modelos con múltiples variables y restricciones.
-* **Diseño POO**: Estructura el código en clases (`ILPModel`, `Variable`, `Constraint`, `CuttingPlaneSolver`) para una mejor organización y claridad.
-* **Uso de `PuLP`**: Se apoya en la librería `PuLP` para resolver las relajaciones continuas del problema en cada iteración.
+## Estructura de Archivos y Funcionalidad
 
-## Requisitos
+### 1. `main.py`
 
-Para ejecutar este programa, necesitarás tener instalado Python y las siguientes librerías:
+- **Propósito:** Es el punto de entrada del programa. Gestiona la interacción con el usuario y coordina el proceso de resolución.
+- **Flujo:**
+  1. Solicita al usuario los datos del modelo (tipo de problema, variables, restricciones) de forma interactiva.
+  2. Construye un objeto `ILPModel` con la información ingresada.
+  3. Crea una instancia de `CuttingPlaneSolver` usando el modelo definido.
+  4. Ejecuta el método de planos de corte y muestra los resultados finales (solución óptima entera o mensaje de error).
+- **No contiene lógica matemática de optimización**, solo orquesta el flujo y la entrada/salida.
 
-* **`PuLP`**: Una librería para modelar y resolver problemas de optimización lineal.
-* **`NumPy`**: (Opcional, pero recomendado para manejo de arrays y cálculos numéricos si se implementan cortes de Gomory más complejos).
+### 2. `ilp_model.py`
 
-Puedes instalarlas usando pip:
+- **Propósito:** Define la estructura del modelo de Programación Lineal Entera (PLE) y sus componentes.
+- **Clases principales:**
+  - `Variable`: Representa una variable de decisión (continua, entera o binaria), con sus cotas y tipo.
+  - `Constraint`: Representa una restricción lineal (coeficientes, tipo de comparación y lado derecho).
+  - `ILPModel`: Gestiona el conjunto de variables, restricciones y la función objetivo. Permite:
+    - Agregar variables y restricciones.
+    - Construir la relajación lineal del modelo (ignorando temporalmente la integralidad).
+    - Resolver la relajación LP usando la librería `PuLP`.
+- **No resuelve el problema entero**, solo modela y resuelve la versión relajada (continua) del problema.
 
-```bash
-pip install pulp numpy
+### 3. `cutting_plane_solver.py`
+
+- **Propósito:** Implementa el algoritmo de **planos de corte** para encontrar soluciones enteras.
+- **Clases principales:**
+  - `CuttingPlaneSolver`: Recibe un `ILPModel` y aplica el siguiente ciclo:
+    1. Resuelve la relajación LP del modelo.
+    2. Si la solución es entera, termina y devuelve el resultado.
+    3. Si hay variables fraccionarias que deberían ser enteras, genera un "corte" (restricción adicional) para eliminar la solución fraccionaria actual.
+    4. Añade el corte al modelo y repite el proceso.
+    5. Si no se pueden generar más cortes o el problema se vuelve infactible, informa el resultado.
+- **Nota:** La generación de cortes es conceptual/simplificada (no implementa cortes de Gomory exactos, sino cortes de redondeo para propósitos didácticos).
+
+---
+
+## Ejecución Paso a Paso
+
+1. **(Opcional pero recomendado) Crear y activar un entorno virtual:**
+
+   ```bash
+   python -m venv venv
+   # En Windows:
+   venv\Scripts\activate
+   # En Linux/Mac:
+   source venv/bin/activate
+   ```
+
+2. **Instalar dependencias:**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+   > Esto instalará `PuLP` (y opcionalmente `numpy` si decides usarlo para extensiones).
+
+3. **Ejecutar el programa principal:**
+
+   ```bash
+   python main.py
+   ```
+
+4. **Seguir las instrucciones interactivas:**
+   - El programa te pedirá que definas el tipo de problema (maximizar/minimizar), las variables (nombre, tipo, cotas, coeficientes), y las restricciones (coeficientes, tipo, RHS).
+   - El solucionador aplicará el método de planos de corte y mostrará el resultado paso a paso.
+
+---
+
+## Ejemplo de Uso
+
+```
+¿Cuál es el tipo de problema?
+  0. Maximizar
+  1. Minimizar
+Seleccione una opción (0 o 1): 0
+Ingrese el número de variables de decisión: 2
+Ingrese el nombre de la variable 1 (ej., x1): x1
+Ingrese el tipo de la variable x1:
+  0. Continua
+  1. Entera
+  2. Binaria (0 o 1)
+Seleccione una opción (0, 1 o 2): 1
+Ingrese la cota inferior para x1 (deje en blanco para 0):
+Ingrese la cota superior para x1 (deje en blanco para sin límite, o para binarias se ajusta automáticamente):
+Ingrese el coeficiente de x1 en la función objetivo: 2
+... (continúa para las demás variables y restricciones)
+```
+
+---
+
+## Notas y Extensiones
+- El método de planos de corte implementado es conceptual y didáctico. Para problemas grandes o cortes más sofisticados (como cortes de Gomory reales), se requeriría acceso al tableau simplex y una lógica más avanzada.
+- Puedes modificar o extender las clases para agregar más tipos de restricciones, validaciones, o mejorar la generación de cortes.
+
+---
+
+## Créditos
+- Basado en técnicas clásicas de optimización y el uso de la librería [PuLP](https://coin-or.github.io/pulp/).
